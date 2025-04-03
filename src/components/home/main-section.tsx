@@ -6,6 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
 const TimeSeriesVisualization = () => {
     const [timeInterval, setTimeInterval] = useState('1h');
     const [chartData, setChartData] = useState<{ time: number; open: number; high: number; low: number; close: number; color: string; displayTime: string; }[]>([]);
@@ -17,11 +18,33 @@ const TimeSeriesVisualization = () => {
     } | null>(null);
     const [zoomLevel, setZoomLevel] = useState(1);
     const svgRef = useRef<SVGSVGElement>(null);
+    const [chartWidth, setChartWidth] = useState(1000);
+    const [chartHeight, setChartHeight] = useState(350);
+    const chartContainerRef = useRef<HTMLDivElement>(null);
 
     // Generate sample data with different time intervals
     useEffect(() => {
         generateChartData(timeInterval);
     }, [timeInterval]);
+
+    // Responsive chart dimensions
+    useEffect(() => {
+        const handleResize = () => {
+            if (chartContainerRef.current) {
+                const containerWidth = chartContainerRef.current.clientWidth;
+                setChartWidth(containerWidth);
+                // Adjust height based on width for a better aspect ratio on mobile
+                setChartHeight(Math.max(300, containerWidth * 0.6));
+            }
+        };
+
+        // Initial size
+        handleResize();
+
+        // Add resize listener
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     const generateChartData = (interval: string) => {
         const data = [];
@@ -133,11 +156,34 @@ const TimeSeriesVisualization = () => {
     };
 
     // Handle mouse move for hover information
-    const handleMouseMove = (e: { clientX: number; }) => {
+    const handleMouseMove = (e: React.MouseEvent) => {
         if (!svgRef.current) return;
 
         const svgRect = svgRef.current.getBoundingClientRect();
         const x = e.clientX - svgRect.left;
+        const chartWidth = svgRect.width;
+
+        // Find nearest data point
+        const index = Math.min(
+            Math.max(Math.floor((x / chartWidth) * chartData.length), 0),
+            chartData.length - 1
+        );
+
+        if (chartData[index]) {
+            setHoverInfo({
+                x,
+                point: chartData[index],
+                volumePoint: volumeData[index]
+            });
+        }
+    };
+
+    // Handle touch move for mobile devices
+    const handleTouchMove = (e: React.TouchEvent) => {
+        if (!svgRef.current || e.touches.length === 0) return;
+
+        const svgRect = svgRef.current.getBoundingClientRect();
+        const x = e.touches[0].clientX - svgRect.left;
         const chartWidth = svgRect.width;
 
         // Find nearest data point
@@ -177,15 +223,26 @@ const TimeSeriesVisualization = () => {
 
     const [activeTab, setActiveTab] = useState('Market');
     const [tradeType, setTradeType] = useState('Buy');
-    const [, setSelectedCurrency] = useState('HYPE');
+    const [selectedCurrency, setSelectedCurrency] = useState('HYPE');
+
+    // Calculate number of time grid lines based on chart width
+    const getTimeGridLines = () => {
+        const baseCount = 6;
+        if (chartWidth < 500) return 3;
+        if (chartWidth < 768) return 4;
+        return baseCount;
+    };
+
+    const timeGridLineCount = getTimeGridLines();
 
     return (
-        <>
-            <div className=' container mx-auto bg-black flex flex-col-2 gap-4'>
-                <div>
+        <div className="container mx-auto px-2 sm:px-4">
+            <div className="flex flex-col lg:flex-row gap-4">
+                {/* Chart Card */}
+                <div className="w-full lg:w-2/3">
                     <Card className="w-full bg-gray-800 text-white">
                         <CardHeader className="pb-0">
-                            <div className="flex justify-between items-center">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                                 <CardTitle className="text-xl font-bold">HYPE/USDC</CardTitle>
                                 <div className="flex items-center space-x-1">
                                     <span className="text-sm text-gray-400">Time Period:</span>
@@ -205,35 +262,38 @@ const TimeSeriesVisualization = () => {
                         </CardHeader>
                         <CardContent>
                             <div
+                                ref={chartContainerRef}
                                 className="relative"
                                 onWheel={handleWheel}
                                 onMouseMove={handleMouseMove}
+                                onTouchMove={handleTouchMove}
                                 onMouseLeave={handleMouseLeave}
+                                onTouchEnd={handleMouseLeave}
                             >
                                 <svg
                                     ref={svgRef}
                                     width="100%"
-                                    height="350"
-                                    viewBox="0 0 1000 350"
+                                    height={chartHeight}
+                                    viewBox={`0 0 ${chartWidth} ${chartHeight}`}
                                     className="bg-gray-900"
                                 >
                                     {/* Price grid lines */}
                                     {Array.from({ length: 5 }).map((_, i) => {
-                                        const y = 20 + (i * 280 / 4);
+                                        const y = 20 + (i * (chartHeight - 70) / 4);
                                         const price = paddedMax - (i * (paddedMax - paddedMin) / 4);
                                         return (
                                             <g key={`grid-${i}`}>
                                                 <line
                                                     x1="0"
                                                     y1={y}
-                                                    x2="1000"
+                                                    x2={chartWidth}
                                                     y2={y}
                                                     stroke="#333"
                                                     strokeWidth="1"
                                                     strokeDasharray="5,5"
                                                 />
                                                 <text
-                                                    x="985"
+                                                    x={chartWidth - 15}
                                                     y={y - 5}
                                                     fill="#888"
                                                     fontSize="12"
@@ -245,10 +305,10 @@ const TimeSeriesVisualization = () => {
                                         );
                                     })}
 
-                                    {/* Time grid lines */}
-                                    {Array.from({ length: 6 }).map((_, i) => {
-                                        const x = 10 + (i * 980 / 5);
-                                        const index = Math.floor(startIndex + (i * visibleData.length / 5));
+                                    {/* Time grid lines - adaptive based on screen width */}
+                                    {Array.from({ length: timeGridLineCount }).map((_, i) => {
+                                        const x = 10 + (i * (chartWidth - 20) / (timeGridLineCount - 1));
+                                        const index = Math.floor(startIndex + (i * visibleData.length / (timeGridLineCount - 1)));
                                         const label = index < chartData.length ? chartData[index]?.displayTime : '';
                                         return (
                                             <g key={`time-${i}`}>
@@ -256,14 +316,14 @@ const TimeSeriesVisualization = () => {
                                                     x1={x}
                                                     y1="20"
                                                     x2={x}
-                                                    y2="300"
+                                                    y2={chartHeight - 50}
                                                     stroke="#333"
                                                     strokeWidth="1"
                                                     strokeDasharray="5,5"
                                                 />
                                                 <text
                                                     x={x}
-                                                    y="315"
+                                                    y={chartHeight - 35}
                                                     fill="#888"
                                                     fontSize="12"
                                                     textAnchor="middle"
@@ -276,11 +336,11 @@ const TimeSeriesVisualization = () => {
 
                                     {/* Candlesticks */}
                                     {visibleData.map((point, i) => {
-                                        const x = 10 + (i / (visibleData.length - 1)) * 980;
-                                        const heightScale = 260 / (paddedMax - paddedMin);
+                                        const x = 10 + (i / (visibleData.length - 1)) * (chartWidth - 20);
+                                        const heightScale = (chartHeight - 70) / (paddedMax - paddedMin);
 
                                         // Calculate candle positions
-                                        const candleWidth = Math.min(16, 980 / visibleData.length * 0.8);
+                                        const candleWidth = Math.min(16, (chartWidth - 20) / visibleData.length * 0.8);
                                         const openY = 20 + (paddedMax - point.open) * heightScale;
                                         const closeY = 20 + (paddedMax - point.close) * heightScale;
                                         const highY = 20 + (paddedMax - point.high) * heightScale;
@@ -310,15 +370,15 @@ const TimeSeriesVisualization = () => {
 
                                     {/* Volume bars at bottom */}
                                     {visibleVolumeData.map((vol, i) => {
-                                        const x = 10 + (i / (visibleVolumeData.length - 1)) * 980;
+                                        const x = 10 + (i / (visibleVolumeData.length - 1)) * (chartWidth - 20);
                                         const height = (vol.volume / maxVolume) * 40;
-                                        const width = Math.min(16, 980 / visibleVolumeData.length * 0.8);
+                                        const width = Math.min(16, (chartWidth - 20) / visibleVolumeData.length * 0.8);
 
                                         return (
                                             <rect
                                                 key={`vol-${i}`}
                                                 x={x - width / 2}
-                                                y={330 - height}
+                                                y={chartHeight - 50 - height}
                                                 width={width}
                                                 height={height}
                                                 fill={vol.color === 'green' ? '#26a69a80' : '#ef535080'}
@@ -326,20 +386,20 @@ const TimeSeriesVisualization = () => {
                                         );
                                     })}
 
-                                    {/* Hover line and info */}
+                                    {/* Hover line and info - positioned responsively */}
                                     {hoverInfo && (
                                         <>
                                             <line
                                                 x1={hoverInfo.x}
                                                 y1="20"
                                                 x2={hoverInfo.x}
-                                                y2="330"
+                                                y2={chartHeight - 50}
                                                 stroke="#aaa"
                                                 strokeWidth="1"
                                                 strokeDasharray="5,5"
                                             />
                                             <rect
-                                                x={hoverInfo.x + 10}
+                                                x={hoverInfo.x + 10 > chartWidth - 170 ? hoverInfo.x - 170 : hoverInfo.x + 10}
                                                 y="30"
                                                 width="160"
                                                 height="120"
@@ -347,25 +407,50 @@ const TimeSeriesVisualization = () => {
                                                 fill="#1e293b"
                                                 stroke="#4a5568"
                                             />
-                                            <text x={hoverInfo.x + 20} y="50" fill="#fff" fontSize="12">
+                                            <text
+                                                x={hoverInfo.x + 10 > chartWidth - 170 ? hoverInfo.x - 160 : hoverInfo.x + 20}
+                                                y="50"
+                                                fill="#fff"
+                                                fontSize="12"
+                                            >
                                                 {formatDate(hoverInfo.point.time)}
                                             </text>
-                                            <text x={hoverInfo.x + 20} y="70" fill="#fff" fontSize="12">
+                                            <text
+                                                x={hoverInfo.x + 10 > chartWidth - 170 ? hoverInfo.x - 160 : hoverInfo.x + 20}
+                                                y="70"
+                                                fill="#fff"
+                                                fontSize="12"
+                                            >
                                                 Open: <tspan fill={hoverInfo.point.color === 'green' ? '#26a69a' : '#ef5350'}>
                                                     {hoverInfo.point.open.toFixed(3)}
                                                 </tspan>
                                             </text>
-                                            <text x={hoverInfo.x + 20} y="90" fill="#fff" fontSize="12">
+                                            <text
+                                                x={hoverInfo.x + 10 > chartWidth - 170 ? hoverInfo.x - 160 : hoverInfo.x + 20}
+                                                y="90"
+                                                fill="#fff"
+                                                fontSize="12"
+                                            >
                                                 High: <tspan fill={hoverInfo.point.color === 'green' ? '#26a69a' : '#ef5350'}>
                                                     {hoverInfo.point.high.toFixed(3)}
                                                 </tspan>
                                             </text>
-                                            <text x={hoverInfo.x + 20} y="110" fill="#fff" fontSize="12">
+                                            <text
+                                                x={hoverInfo.x + 10 > chartWidth - 170 ? hoverInfo.x - 160 : hoverInfo.x + 20}
+                                                y="110"
+                                                fill="#fff"
+                                                fontSize="12"
+                                            >
                                                 Low: <tspan fill={hoverInfo.point.color === 'green' ? '#26a69a' : '#ef5350'}>
                                                     {hoverInfo.point.low.toFixed(3)}
                                                 </tspan>
                                             </text>
-                                            <text x={hoverInfo.x + 20} y="130" fill="#fff" fontSize="12">
+                                            <text
+                                                x={hoverInfo.x + 10 > chartWidth - 170 ? hoverInfo.x - 160 : hoverInfo.x + 20}
+                                                y="130"
+                                                fill="#fff"
+                                                fontSize="12"
+                                            >
                                                 Close: <tspan fill={hoverInfo.point.color === 'green' ? '#26a69a' : '#ef5350'}>
                                                     {hoverInfo.point.close.toFixed(3)}
                                                 </tspan>
@@ -380,8 +465,8 @@ const TimeSeriesVisualization = () => {
                                 </div>
                             </div>
 
-                            <div className="mt-4 flex justify-between items-center text-sm">
-                                <div className="text-gray-400">
+                            <div className="mt-4 flex flex-col sm:flex-row justify-between items-center text-sm gap-2">
+                                <div className="text-gray-400 text-xs sm:text-sm">
                                     Use mouse wheel to zoom in/out
                                 </div>
                                 <div className="flex items-center">
@@ -404,12 +489,14 @@ const TimeSeriesVisualization = () => {
                         </CardContent>
                     </Card>
                 </div>
-                <div>
-                    <Card className="w-full  bg-slate-900 text-white border-gray-700">
+
+                {/* Trading Card */}
+                <div className="w-full lg:w-1/3 mt-4 lg:mt-0">
+                    <Card className="w-full bg-slate-900 text-white border-gray-700">
                         <CardContent className="p-0">
                             {/* Top Nav */}
                             <div className="flex justify-between items-center px-4 py-3 border-b border-gray-700">
-                                <div className="flex space-x-6">
+                                <div className="flex space-x-4 sm:space-x-6">
                                     {['Market', 'Limit', 'Pro'].map((tab) => (
                                         <button
                                             key={tab}
@@ -448,7 +535,7 @@ const TimeSeriesVisualization = () => {
                             <div className="p-4 pt-2">
                                 <div className="flex justify-between text-sm mb-2">
                                     <span className="text-gray-400">Available to Trade</span>
-                                    <span>0.00 HYPE</span>
+                                    <span>0.00 {selectedCurrency}</span>
                                 </div>
 
                                 {/* Size Selector */}
@@ -521,7 +608,7 @@ const TimeSeriesVisualization = () => {
                     </Card>
                 </div>
             </div>
-        </>
+        </div>
     );
 };
 
