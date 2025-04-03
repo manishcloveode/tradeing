@@ -70,7 +70,7 @@ const CryptoVaultDashboard = () => {
 
     return (
         <div className="min-h-screen bg-black text-white p-8">
-            <div className="max-w-6xl mx-auto">
+            <div className="w-full mx-auto">
                 <div className="flex justify-between items-center mb-8">
                     <div>
                         <h1 className="text-4xl font-bold">$202,810,525</h1>

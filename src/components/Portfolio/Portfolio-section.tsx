@@ -10,7 +10,7 @@ const PortfolioDashboard = () => {
 
     return (
         <div className="min-h-screen bg-gray-900 text-white p-8" style={{ backgroundColor: '#00241B' }}>
-            <div className="max-w-6xl mx-auto">
+            <div className="w-full mx-auto">
                 {/* Portfolio Header */}
                 <h1 className="text-4xl font-light mb-8">Portfolio</h1>
 

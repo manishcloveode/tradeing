@@ -11,7 +11,7 @@ const PortfolioDashboard = () => {
 
     return (
         <div className="min-h-screen bg-black text-white p-8 ">
-            <div className="max-w-6xl mx-auto">
+            <div className="w-full mx-auto">
                 {/* Portfolio Header */}
                 <h1 className="text-4xl font-light mb-8">Portfolio</h1>
 

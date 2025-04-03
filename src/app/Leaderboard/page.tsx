@@ -27,7 +27,7 @@ const StakingDashboard = () => {
 
     return (
         <div className="min-h-screen text-white p-8 bg-black" >
-            <div className="max-w-6xl mx-auto">
+            <div className="w-full">
                 {/* Header */}
                 <h1 className="text-4xl font-light mb-4">Staking</h1>
                 <p className="text-sm mb-8 text-gray-300">
