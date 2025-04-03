@@ -14,7 +14,7 @@ export default function Navbar() {
             <div className="flex items-center space-x-8">
                 {/* Logo */}
                 <div className="flex items-center">
-                    <span className="text-xl font-bold">Hyperliquid</span>
+                    <span className="text-xl font-bold">Trade</span>
                 </div>
 
                 {/* Nav Links */}

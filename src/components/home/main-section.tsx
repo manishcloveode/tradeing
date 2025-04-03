@@ -275,7 +275,7 @@ const TimeSeriesVisualization = () => {
                                     width="100%"
                                     height={chartHeight}
                                     viewBox={`0 0 ${chartWidth} ${chartHeight}`}
-                                    className="bg-gray-900"
+                                    className="bg-black"
                                 >
                                     {/* Price grid lines */}
                                     {Array.from({ length: 5 }).map((_, i) => {
