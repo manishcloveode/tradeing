@@ -1,6 +1,14 @@
 "use client";
 import React, { useEffect, useRef, useState, memo } from 'react';
-
+import { ChevronDown } from 'lucide-react';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 function TradingViewWidget() {
     const container = useRef<HTMLDivElement | null>(null);
     const [activeTab, setActiveTab] = useState<'Market' | 'Limit' | 'Pro'>('Market');
@@ -106,12 +114,17 @@ function TradingViewWidget() {
                 <div className="mb-4">
                     <div className="flex justify-between mb-2">
                         <span>Size</span>
-                        <div className="flex items-center border border-gray-700 rounded px-2">
-                            <span>HYPE</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                            </svg>
-                        </div>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger> <ChevronDown /></DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem>Profile</DropdownMenuItem>
+                                <DropdownMenuItem>Billing</DropdownMenuItem>
+                                <DropdownMenuItem>Team</DropdownMenuItem>
+                                <DropdownMenuItem>Subscription</DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
                 </div>
 
