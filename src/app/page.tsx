@@ -1,5 +1,5 @@
 import TradingViewWidget from "@/components/home/main-section";
-import OrderBook from "@/components/home/order-section";
+
 
 export default function Home() {
   return (
@@ -7,7 +7,6 @@ export default function Home() {
 
       <main className="h-full w-full">
         <TradingViewWidget />
-        {/* <OrderBook /> */}
       </main>
     </>
   );
