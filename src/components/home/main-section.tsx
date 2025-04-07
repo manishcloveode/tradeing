@@ -1,615 +1,138 @@
 "use client";
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState, memo } from 'react';
 
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+function TradingViewWidget() {
+    const container = useRef<HTMLDivElement | null>(null);
+    const [activeTab, setActiveTab] = useState<'Market' | 'Limit' | 'Pro'>('Market');
+    const [activeAction, setActiveAction] = useState<'Buy' | 'Sell'>('Buy');
+    const [sliderValue, setSliderValue] = useState(0);
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
-const TimeSeriesVisualization = () => {
-    const [timeInterval, setTimeInterval] = useState('1h');
-    const [chartData, setChartData] = useState<{ time: number; open: number; high: number; low: number; close: number; color: string; displayTime: string; }[]>([]);
-    const [volumeData, setVolumeData] = useState<{ time: number; volume: number; color: string; }[]>([]);
-    const [hoverInfo, setHoverInfo] = useState<{
-        x: number;
-        point: { time: number; open: number; high: number; low: number; close: number; color: string; displayTime: string; };
-        volumePoint: { time: number; volume: number; color: string; };
-    } | null>(null);
-    const [zoomLevel, setZoomLevel] = useState(1);
-    const svgRef = useRef<SVGSVGElement>(null);
-    const [chartWidth, setChartWidth] = useState(1000);
-    const [chartHeight, setChartHeight] = useState(350);
-    const chartContainerRef = useRef<HTMLDivElement>(null);
-
-    // Generate sample data with different time intervals
     useEffect(() => {
-        generateChartData(timeInterval);
-    }, [timeInterval]);
-
-    // Responsive chart dimensions
-    useEffect(() => {
-        const handleResize = () => {
-            if (chartContainerRef.current) {
-                const containerWidth = chartContainerRef.current.clientWidth;
-                setChartWidth(containerWidth);
-                // Adjust height based on width for a better aspect ratio on mobile
-                setChartHeight(Math.max(300, containerWidth * 0.6));
-            }
-        };
-
-        // Initial size
-        handleResize();
-
-        // Add resize listener
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
+        const script = document.createElement("script");
+        script.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
+        script.type = "text/javascript";
+        script.async = true;
+        script.innerHTML = `
+        {
+          "autosize": true,
+          "symbol": "NASDAQ:AAPL",
+          "timezone": "Etc/UTC",
+          "theme": "dark",
+          "style": "1",
+          "locale": "en",
+          "withdateranges": true,
+          "range": "ALL",
+          "hide_side_toolbar": false,
+          "allow_symbol_change": true,
+          "details": true,
+          "show_popup_button": true,
+          "popup_width": "1000",
+          "popup_height": "650",
+          "support_host": "https://www.tradingview.com"
+        }`;
+        if (container.current) {
+            container.current.appendChild(script);
+        }
     }, []);
 
-    const generateChartData = (interval: string) => {
-        const data = [];
-        const volumes = [];
-        let currentPrice = 20;
-        const now = new Date();
-        let time = new Date(now);
-
-        // Set time intervals based on selection
-        let minutesInterval = 5;
-        let dataPoints = 100;
-
-        switch (interval) {
-            case '5m':
-                minutesInterval = 5;
-                dataPoints = 100;
-                time.setHours(time.getHours() - 8);
-                break;
-            case '1h':
-                minutesInterval = 60;
-                dataPoints = 48;
-                time.setHours(time.getHours() - 48);
-                break;
-            case 'D':
-                minutesInterval = 60 * 24;
-                dataPoints = 30;
-                time.setDate(time.getDate() - 30);
-                break;
-            case '30m':
-                minutesInterval = 30;
-                dataPoints = 80;
-                time.setHours(time.getHours() - 40);
-                break;
-            default:
-                minutesInterval = 60;
-                dataPoints = 48;
-        }
-
-        for (let i = 0; i < dataPoints; i++) {
-            const volatility = interval === 'D' ? 1.0 : interval === '1h' ? 0.5 : 0.3;
-            const open = currentPrice;
-            const change = (Math.random() - 0.5) * volatility;
-            const close = parseFloat((open + change).toFixed(3));
-            const high = parseFloat((Math.max(open, close) + Math.random() * 0.2).toFixed(3));
-            const low = parseFloat((Math.min(open, close) - Math.random() * 0.2).toFixed(3));
-            const volume = Math.floor(Math.random() * 1000 + 100);
-
-            const timestamp = new Date(time).getTime();
-
-            data.push({
-                time: timestamp,
-                open,
-                high,
-                low,
-                close,
-                color: close >= open ? 'green' : 'red',
-                displayTime: formatTime(time, interval)
-            });
-
-            volumes.push({
-                time: timestamp,
-                volume,
-                color: close >= open ? 'green' : 'red'
-            });
-
-            currentPrice = close;
-            time = new Date(time.getTime() + minutesInterval * 60000);
-        }
-
-        // Add some trend to make the data look more realistic
-        for (let i = 1; i < data.length; i++) {
-            if (i % 8 === 0) {
-                const trendDirection = Math.random() > 0.5 ? 1 : -1;
-                let trendStrength = Math.random() * 2;
-
-                for (let j = 0; j < 5 && i + j < data.length; j++) {
-                    data[i + j].close = parseFloat((data[i + j].close + trendDirection * trendStrength * (5 - j) / 10).toFixed(3));
-                    data[i + j].color = data[i + j].close >= data[i + j].open ? 'green' : 'red';
-                    trendStrength *= 0.85;
-                }
-            }
-        }
-
-        setChartData(data);
-        setVolumeData(volumes);
+    const handleTabChange = (tab: 'Market' | 'Limit' | 'Pro') => {
+        setActiveTab(tab);
     };
 
-    // Format time based on interval
-    const formatTime = (date: Date, interval: string) => {
-        if (interval === 'D') {
-            return `${date.getMonth() + 1}/${date.getDate()}`;
-        } else {
-            return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
-        }
+    const handleActionChange = (action: 'Buy' | 'Sell') => {
+        setActiveAction(action);
     };
 
-    // Format date for display in hover tooltip
-    const formatDate = (timestamp: string | number | Date) => {
-        const date = new Date(timestamp);
-        return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+    const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSliderValue(parseInt(e.target.value));
     };
-
-    // Handle mouse wheel for zooming
-    const handleWheel = (e: { preventDefault: () => void; deltaY: number; }) => {
-        e.preventDefault();
-        const delta = e.deltaY * -0.01;
-        const newZoom = Math.min(Math.max(zoomLevel + delta, 0.5), 3);
-        setZoomLevel(newZoom);
-    };
-
-    // Handle mouse move for hover information
-    const handleMouseMove = (e: React.MouseEvent) => {
-        if (!svgRef.current) return;
-
-        const svgRect = svgRef.current.getBoundingClientRect();
-        const x = e.clientX - svgRect.left;
-        const chartWidth = svgRect.width;
-
-        // Find nearest data point
-        const index = Math.min(
-            Math.max(Math.floor((x / chartWidth) * chartData.length), 0),
-            chartData.length - 1
-        );
-
-        if (chartData[index]) {
-            setHoverInfo({
-                x,
-                point: chartData[index],
-                volumePoint: volumeData[index]
-            });
-        }
-    };
-
-    // Handle touch move for mobile devices
-    const handleTouchMove = (e: React.TouchEvent) => {
-        if (!svgRef.current || e.touches.length === 0) return;
-
-        const svgRect = svgRef.current.getBoundingClientRect();
-        const x = e.touches[0].clientX - svgRect.left;
-        const chartWidth = svgRect.width;
-
-        // Find nearest data point
-        const index = Math.min(
-            Math.max(Math.floor((x / chartWidth) * chartData.length), 0),
-            chartData.length - 1
-        );
-
-        if (chartData[index]) {
-            setHoverInfo({
-                x,
-                point: chartData[index],
-                volumePoint: volumeData[index]
-            });
-        }
-    };
-
-    // Handle mouse leave
-    const handleMouseLeave = () => {
-        setHoverInfo(null);
-    };
-
-    // Calculate visual display values
-    const minPrice = Math.min(...chartData.map(d => d.low));
-    const maxPrice = Math.max(...chartData.map(d => d.high));
-    const priceRange = maxPrice - minPrice;
-    const paddedMin = minPrice - priceRange * 0.05;
-    const paddedMax = maxPrice + priceRange * 0.05;
-    const maxVolume = Math.max(...volumeData.map(d => d.volume));
-
-    // Calculate visible data range based on zoom
-    const visibleDataPoints = Math.ceil(chartData.length / zoomLevel);
-    const startIndex = Math.floor((chartData.length - visibleDataPoints) / 2);
-    const endIndex = startIndex + visibleDataPoints;
-    const visibleData = chartData.slice(Math.max(0, startIndex), Math.min(chartData.length, endIndex));
-    const visibleVolumeData = volumeData.slice(Math.max(0, startIndex), Math.min(volumeData.length, endIndex));
-
-    const [activeTab, setActiveTab] = useState('Market');
-    const [tradeType, setTradeType] = useState('Buy');
-    const [selectedCurrency, setSelectedCurrency] = useState('HYPE');
-
-    // Calculate number of time grid lines based on chart width
-    const getTimeGridLines = () => {
-        const baseCount = 6;
-        if (chartWidth < 500) return 3;
-        if (chartWidth < 768) return 4;
-        return baseCount;
-    };
-
-    const timeGridLineCount = getTimeGridLines();
 
     return (
-        <div className="container mx-auto px-2 sm:px-4">
-            <div className="flex flex-col lg:flex-row gap-4">
-                {/* Chart Card */}
-                <div className="w-full lg:w-2/3">
-                    <Card className="w-full bg-gray-800 text-white">
-                        <CardHeader className="pb-0">
-                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                                <CardTitle className="text-xl font-bold">HYPE/USDC</CardTitle>
-                                <div className="flex items-center space-x-1">
-                                    <span className="text-sm text-gray-400">Time Period:</span>
-                                    <div className="flex bg-gray-700 rounded">
-                                        {['5m', '1h', 'D', '30m'].map((interval) => (
-                                            <button
-                                                key={interval}
-                                                className={`px-2 py-1 text-sm ${timeInterval === interval ? 'bg-blue-600 rounded' : ''}`}
-                                                onClick={() => setTimeInterval(interval)}
-                                            >
-                                                {interval}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            <div
-                                ref={chartContainerRef}
-                                className="relative"
-                                onWheel={handleWheel}
-                                onMouseMove={handleMouseMove}
-                                onTouchMove={handleTouchMove}
-                                onMouseLeave={handleMouseLeave}
-                                onTouchEnd={handleMouseLeave}
-                            >
-                                <svg
-                                    ref={svgRef}
-                                    width="100%"
-                                    height={chartHeight}
-                                    viewBox={`0 0 ${chartWidth} ${chartHeight}`}
-                                    className="bg-black"
-                                >
-                                    {/* Price grid lines */}
-                                    {Array.from({ length: 5 }).map((_, i) => {
-                                        const y = 20 + (i * (chartHeight - 70) / 4);
-                                        const price = paddedMax - (i * (paddedMax - paddedMin) / 4);
-                                        return (
-                                            <g key={`grid-${i}`}>
-                                                <line
-                                                    x1="0"
-                                                    y1={y}
-                                                    x2={chartWidth}
-                                                    y2={y}
-                                                    stroke="#333"
-                                                    strokeWidth="1"
-                                                    strokeDasharray="5,5"
-                                                />
-                                                <text
-                                                    x={chartWidth - 15}
-                                                    y={y - 5}
-                                                    fill="#888"
-                                                    fontSize="12"
-                                                    textAnchor="end"
-                                                >
-                                                    {price.toFixed(3)}
-                                                </text>
-                                            </g>
-                                        );
-                                    })}
+        <div className="flex h-full w-full bg-gray-900 text-white">
+            {/* Left side - TradingView Chart */}
+            <div className="flex-grow h-full">
+                <div className="tradingview-widget-container h-full" ref={container}>
+                    <div className="tradingview-widget-container__widget" style={{ height: "calc(100% - 32px)", width: "100%" }}></div>
+                </div>
+            </div>
 
-                                    {/* Time grid lines - adaptive based on screen width */}
-                                    {Array.from({ length: timeGridLineCount }).map((_, i) => {
-                                        const x = 10 + (i * (chartWidth - 20) / (timeGridLineCount - 1));
-                                        const index = Math.floor(startIndex + (i * visibleData.length / (timeGridLineCount - 1)));
-                                        const label = index < chartData.length ? chartData[index]?.displayTime : '';
-                                        return (
-                                            <g key={`time-${i}`}>
-                                                <line
-                                                    x1={x}
-                                                    y1="20"
-                                                    x2={x}
-                                                    y2={chartHeight - 50}
-                                                    stroke="#333"
-                                                    strokeWidth="1"
-                                                    strokeDasharray="5,5"
-                                                />
-                                                <text
-                                                    x={x}
-                                                    y={chartHeight - 35}
-                                                    fill="#888"
-                                                    fontSize="12"
-                                                    textAnchor="middle"
-                                                >
-                                                    {label}
-                                                </text>
-                                            </g>
-                                        );
-                                    })}
-
-                                    {/* Candlesticks */}
-                                    {visibleData.map((point, i) => {
-                                        const x = 10 + (i / (visibleData.length - 1)) * (chartWidth - 20);
-                                        const heightScale = (chartHeight - 70) / (paddedMax - paddedMin);
-
-                                        // Calculate candle positions
-                                        const candleWidth = Math.min(16, (chartWidth - 20) / visibleData.length * 0.8);
-                                        const openY = 20 + (paddedMax - point.open) * heightScale;
-                                        const closeY = 20 + (paddedMax - point.close) * heightScale;
-                                        const highY = 20 + (paddedMax - point.high) * heightScale;
-                                        const lowY = 20 + (paddedMax - point.low) * heightScale;
-
-                                        return (
-                                            <g key={i}>
-                                                {/* Wick */}
-                                                <line
-                                                    x1={x} y1={highY}
-                                                    x2={x} y2={lowY}
-                                                    stroke={point.color === 'green' ? '#26a69a' : '#ef5350'}
-                                                    strokeWidth="2"
-                                                />
-
-                                                {/* Candle */}
-                                                <rect
-                                                    x={x - candleWidth / 2}
-                                                    y={Math.min(openY, closeY)}
-                                                    width={candleWidth}
-                                                    height={Math.max(Math.abs(closeY - openY), 1)}
-                                                    fill={point.color === 'green' ? '#26a69a' : '#ef5350'}
-                                                />
-                                            </g>
-                                        );
-                                    })}
-
-                                    {/* Volume bars at bottom */}
-                                    {visibleVolumeData.map((vol, i) => {
-                                        const x = 10 + (i / (visibleVolumeData.length - 1)) * (chartWidth - 20);
-                                        const height = (vol.volume / maxVolume) * 40;
-                                        const width = Math.min(16, (chartWidth - 20) / visibleVolumeData.length * 0.8);
-
-                                        return (
-                                            <rect
-                                                key={`vol-${i}`}
-                                                x={x - width / 2}
-                                                y={chartHeight - 50 - height}
-                                                width={width}
-                                                height={height}
-                                                fill={vol.color === 'green' ? '#26a69a80' : '#ef535080'}
-                                            />
-                                        );
-                                    })}
-
-                                    {/* Hover line and info - positioned responsively */}
-                                    {hoverInfo && (
-                                        <>
-                                            <line
-                                                x1={hoverInfo.x}
-                                                y1="20"
-                                                x2={hoverInfo.x}
-                                                y2={chartHeight - 50}
-                                                stroke="#aaa"
-                                                strokeWidth="1"
-                                                strokeDasharray="5,5"
-                                            />
-                                            <rect
-                                                x={hoverInfo.x + 10 > chartWidth - 170 ? hoverInfo.x - 170 : hoverInfo.x + 10}
-                                                y="30"
-                                                width="160"
-                                                height="120"
-                                                rx="4"
-                                                fill="#1e293b"
-                                                stroke="#4a5568"
-                                            />
-                                            <text
-                                                x={hoverInfo.x + 10 > chartWidth - 170 ? hoverInfo.x - 160 : hoverInfo.x + 20}
-                                                y="50"
-                                                fill="#fff"
-                                                fontSize="12"
-                                            >
-                                                {formatDate(hoverInfo.point.time)}
-                                            </text>
-                                            <text
-                                                x={hoverInfo.x + 10 > chartWidth - 170 ? hoverInfo.x - 160 : hoverInfo.x + 20}
-                                                y="70"
-                                                fill="#fff"
-                                                fontSize="12"
-                                            >
-                                                Open: <tspan fill={hoverInfo.point.color === 'green' ? '#26a69a' : '#ef5350'}>
-                                                    {hoverInfo.point.open.toFixed(3)}
-                                                </tspan>
-                                            </text>
-                                            <text
-                                                x={hoverInfo.x + 10 > chartWidth - 170 ? hoverInfo.x - 160 : hoverInfo.x + 20}
-                                                y="90"
-                                                fill="#fff"
-                                                fontSize="12"
-                                            >
-                                                High: <tspan fill={hoverInfo.point.color === 'green' ? '#26a69a' : '#ef5350'}>
-                                                    {hoverInfo.point.high.toFixed(3)}
-                                                </tspan>
-                                            </text>
-                                            <text
-                                                x={hoverInfo.x + 10 > chartWidth - 170 ? hoverInfo.x - 160 : hoverInfo.x + 20}
-                                                y="110"
-                                                fill="#fff"
-                                                fontSize="12"
-                                            >
-                                                Low: <tspan fill={hoverInfo.point.color === 'green' ? '#26a69a' : '#ef5350'}>
-                                                    {hoverInfo.point.low.toFixed(3)}
-                                                </tspan>
-                                            </text>
-                                            <text
-                                                x={hoverInfo.x + 10 > chartWidth - 170 ? hoverInfo.x - 160 : hoverInfo.x + 20}
-                                                y="130"
-                                                fill="#fff"
-                                                fontSize="12"
-                                            >
-                                                Close: <tspan fill={hoverInfo.point.color === 'green' ? '#26a69a' : '#ef5350'}>
-                                                    {hoverInfo.point.close.toFixed(3)}
-                                                </tspan>
-                                            </text>
-                                        </>
-                                    )}
-                                </svg>
-
-                                {/* Zoom level indicator */}
-                                <div className="absolute top-4 right-4 bg-gray-800 bg-opacity-70 px-2 py-1 rounded text-xs">
-                                    Zoom: {Math.round(zoomLevel * 100)}%
-                                </div>
-                            </div>
-
-                            <div className="mt-4 flex flex-col sm:flex-row justify-between items-center text-sm gap-2">
-                                <div className="text-gray-400 text-xs sm:text-sm">
-                                    Use mouse wheel to zoom in/out
-                                </div>
-                                <div className="flex items-center">
-                                    <span className="mr-2">Zoom: </span>
-                                    <button
-                                        className="px-2 py-1 bg-gray-700 rounded"
-                                        onClick={() => setZoomLevel(Math.max(zoomLevel - 0.25, 0.5))}
-                                    >
-                                        -
-                                    </button>
-                                    <span className="mx-2">{Math.round(zoomLevel * 100)}%</span>
-                                    <button
-                                        className="px-2 py-1 bg-gray-700 rounded"
-                                        onClick={() => setZoomLevel(Math.min(zoomLevel + 0.25, 3))}
-                                    >
-                                        +
-                                    </button>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+            {/* Right side - Trading Panel */}
+            <div className="w-64 border-l border-gray-700 p-4 flex flex-col">
+                {/* Tabs */}
+                <div className="flex border-b border-gray-700 mb-4">
+                    <button
+                        className={`flex-1 py-2 ${activeTab === 'Market' ? 'text-teal-400 border-b-2 border-teal-400' : 'text-gray-400'}`}
+                        onClick={() => handleTabChange('Market')}
+                    >
+                        Market
+                    </button>
+                    <button
+                        className={`flex-1 py-2 ${activeTab === 'Limit' ? 'text-teal-400 border-b-2 border-teal-400' : 'text-gray-400'}`}
+                        onClick={() => handleTabChange('Limit')}
+                    >
+                        Limit
+                    </button>
+                    <button
+                        className={`flex-1 py-2 ${activeTab === 'Pro' ? 'text-teal-400 border-b-2 border-teal-400' : 'text-gray-400'}`}
+                        onClick={() => handleTabChange('Pro')}
+                    >
+                        Pro
+                    </button>
                 </div>
 
-                {/* Trading Card */}
-                <div className="w-full lg:w-1/3 mt-4 lg:mt-0">
-                    <Card className="w-full bg-slate-900 text-white border-gray-700">
-                        <CardContent className="p-0">
-                            {/* Top Nav */}
-                            <div className="flex justify-between items-center px-4 py-3 border-b border-gray-700">
-                                <div className="flex space-x-4 sm:space-x-6">
-                                    {['Market', 'Limit', 'Pro'].map((tab) => (
-                                        <button
-                                            key={tab}
-                                            className={`relative pb-1 text-sm font-medium ${activeTab === tab ? 'text-cyan-400' : 'text-gray-300'}`}
-                                            onClick={() => setActiveTab(tab)}
-                                        >
-                                            {tab}
-                                            {activeTab === tab && (
-                                                <div className="absolute bottom-0 left-0 w-full h-0.5 bg-cyan-400" />
-                                            )}
-                                        </button>
-                                    ))}
-                                </div>
-                                <button className="text-cyan-400 text-sm">Pro</button>
-                            </div>
+                {/* Buy/Sell Buttons */}
+                <div className="mb-4 grid grid-cols-2 gap-2">
+                    <button
+                        className={`py-3 rounded ${activeAction === 'Buy' ? 'bg-teal-500 text-white' : 'bg-gray-800 text-white'}`}
+                        onClick={() => handleActionChange('Buy')}
+                    >
+                        Buy
+                    </button>
+                    <button
+                        className={`py-3 rounded ${activeAction === 'Sell' ? 'bg-red-500 text-white' : 'bg-gray-800 text-white'}`}
+                        onClick={() => handleActionChange('Sell')}
+                    >
+                        Sell
+                    </button>
+                </div>
 
-                            {/* Buy/Sell Buttons */}
-                            <div className="grid grid-cols-2 gap-1 p-1">
-                                <button
-                                    className={`py-2 rounded-md text-center font-medium ${tradeType === 'Buy' ? 'bg-green-600 text-white' : 'bg-slate-800 text-gray-300'
-                                        }`}
-                                    onClick={() => setTradeType('Buy')}
-                                >
-                                    Buy
-                                </button>
-                                <button
-                                    className={`py-2 rounded-md text-center font-medium ${tradeType === 'Sell' ? 'bg-pink-500 text-white' : 'bg-slate-800 text-gray-300'
-                                        }`}
-                                    onClick={() => setTradeType('Sell')}
-                                >
-                                    Sell
-                                </button>
-                            </div>
+                {/* Available to Trade */}
+                <div className="flex justify-between mb-4">
+                    <span className="text-gray-400">Available to Trade</span>
+                    <span>0.00 USDC</span>
+                </div>
 
-                            {/* Trading Options */}
-                            <div className="p-4 pt-2">
-                                <div className="flex justify-between text-sm mb-2">
-                                    <span className="text-gray-400">Available to Trade</span>
-                                    <span>0.00 {selectedCurrency}</span>
-                                </div>
+                {/* Size Selector */}
+                <div className="mb-4">
+                    <div className="flex justify-between mb-2">
+                        <span>Size</span>
+                        <div className="flex items-center border border-gray-700 rounded px-2">
+                            <span>HYPE</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
 
-                                {/* Size Selector */}
-                                <div className="mb-2">
-                                    <div className="text-sm text-gray-400 mb-1">Size</div>
-                                    <div className="relative">
-                                        <Select onValueChange={(value) => setSelectedCurrency(value)}>
-                                            <SelectTrigger className="w-full bg-slate-800 border-gray-700 text-white">
-                                                <SelectValue placeholder="HYPE" />
-                                            </SelectTrigger>
-                                            <SelectContent className="bg-slate-800 border-gray-700 text-white">
-                                                <SelectItem value="USD">USD</SelectItem>
-                                                <SelectItem value="ETH">Ethereum</SelectItem>
-                                                <SelectItem value="COINBASE">Coinbase</SelectItem>
-                                                <SelectItem value="BTC">Bitcoin</SelectItem>
-                                                <SelectItem value="HYPE">HYPE</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-
-                                        <div className="absolute right-12 top-0 h-full flex items-center">
-                                            <Input
-                                                className="w-16 bg-slate-800 border-0 text-right text-white"
-                                                defaultValue="0"
-                                            />
-                                        </div>
-                                        <div className="absolute right-2 top-0 h-full flex items-center">
-                                            <span className="text-gray-400">%</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Enable Trading Button */}
-                                <Button className="w-full bg-cyan-400 hover:bg-cyan-500 text-black font-medium mb-6">
-                                    Enable Trading
-                                </Button>
-
-                                {/* Order Details */}
-                                <div className="space-y-2 mb-6">
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-gray-400">Order Value</span>
-                                        <span>N/A</span>
-                                    </div>
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-gray-400">Slippage</span>
-                                        <span className="text-cyan-400">Est: 0% / Max: 5.00%</span>
-                                    </div>
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-gray-400">Fees</span>
-                                        <span>0.0350% / 0.010%</span>
-                                    </div>
-                                </div>
-
-                                {/* Action Buttons */}
-                                <div className="space-y-2">
-                                    <Button
-                                        variant="outline"
-                                        className="w-full bg-black border-cyan-400 hover:bg-cyan-400 hover:text-black text-cyan-400 font-medium"
-                                    >
-                                        Deposit
-                                    </Button>
-                                    <Button
-                                        variant="outline"
-                                        className="w-full bg-black border-cyan-400 hover:bg-cyan-400 hover:text-black text-cyan-400 font-medium"
-                                    >
-                                        Withdraw
-                                    </Button>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+                {/* Slider */}
+                <div className="mb-6">
+                    <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={sliderValue}
+                        onChange={handleSliderChange}
+                        className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                    />
+                    <div className="flex justify-end mt-2">
+                        <span>{sliderValue}</span>
+                        <span className="ml-2">%</span>
+                    </div>
                 </div>
             </div>
         </div>
     );
-};
+}
 
-export default TimeSeriesVisualization;
+export default memo(TradingViewWidget);

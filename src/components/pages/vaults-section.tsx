@@ -1,29 +1,27 @@
 "use client";
 import React, { useEffect, useRef, memo } from "react";
 
-function TradingViewMiniSymbol() {
+function TradingViewScreener() {
     const containerRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
         const script = document.createElement("script");
-        script.src = "https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js";
+        script.src = "https://s3.tradingview.com/external-embedding/embed-widget-screener.js";
         script.type = "text/javascript";
         script.async = true;
         script.innerHTML = `
       {
-        "symbol": "FX:EURUSD",
         "width": "100%",
         "height": "100%",
-        "locale": "en",
-        "dateRange": "12M",
+        "defaultColumn": "overview",
+        "screener_type": "crypto_mkt",
+        "displayCurrency": "USD",
         "colorTheme": "dark",
-        "isTransparent": false,
-        "autosize": true,
-        "largeChartUrl": ""
+        "locale": "en"
       }
     `;
         if (containerRef.current) {
-            containerRef.current.innerHTML = ""; // clear previous if reloaded
+            containerRef.current.innerHTML = ""; // Clear previous widget if any
             containerRef.current.appendChild(script);
         }
     }, []);
@@ -40,4 +38,4 @@ function TradingViewMiniSymbol() {
     );
 }
 
-export default memo(TradingViewMiniSymbol);
+export default memo(TradingViewScreener);

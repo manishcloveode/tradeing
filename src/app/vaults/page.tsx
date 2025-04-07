@@ -1,8 +1,8 @@
-import CryptoVaultDashboard from "@/components/vaults/vaults-section"
+import TradingViewScreener from "@/components/pages/vaults-section"
 export default function Vaults() {
     return (
-        <main>
-            < CryptoVaultDashboard />
+        <main className="h-full w-full">
+            < TradingViewScreener />
         </main>
     )
 }
