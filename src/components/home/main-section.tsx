@@ -1,14 +1,6 @@
 "use client";
 import React, { useEffect, useRef, useState, memo } from 'react';
-import { ChevronDown, TrendingUp, Sliders, Repeat, Clock, DollarSign, AlertCircle, ChevronRight, Star, RefreshCw } from 'lucide-react';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { TrendingUp, Sliders, Clock, DollarSign, AlertCircle, ChevronRight, Star, RefreshCw } from 'lucide-react';
 
 function TradingViewWidget() {
     const container = useRef<HTMLDivElement | null>(null);
@@ -28,7 +20,7 @@ function TradingViewWidget() {
     const [isLoading, setIsLoading] = useState(true);
     const [quantity, setQuantity] = useState("0");
     const [price, setPrice] = useState("193.42");
-    const [selectedSize, setSelectedSize] = useState("Size");
+
     const [heartbeat, setHeartbeat] = useState(0);
 
     // Symbol options
@@ -129,9 +121,7 @@ function TradingViewWidget() {
         setSelectedTimeframe(tf);
     };
 
-    const handleSelect = (size: React.SetStateAction<string>) => {
-        setSelectedSize(size);
-    };
+
 
     const getPriceColor = () => {
         return heartbeat % 2 === 0 ?
