@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from 'react';
-import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, Info, LineChart, ArrowUpRight, RefreshCw } from 'lucide-react';
 
 const StakingDashboard = () => {
     const [activeTab, setActiveTab] = useState('Staking Balance');
@@ -25,117 +25,167 @@ const StakingDashboard = () => {
         { id: 15, name: 'Hyper Foundation 4', description: 'Hyper Foundation 4', stake: '65,949,552', yourStake: '-', uptime: '100.00%', est_apr: '2.22%', status: 'Active', commission: '3.00%' },
     ];
 
-    return (
-        <div className="min-h-screen text-white bg-black p-8" >
-            <div className="w-full mx-auto">
-                {/* Header */}
-                <h1 className="text-4xl font-light mb-4">Staking</h1>
-                <p className="text-sm mb-8 text-gray-300">
-                    The Hyperliquid L1 is a proof-of-stake blockchain where stakers delegate the native token HYPE to
-                    <span className="text-teal-400"> validators </span>
-                    to earn staking rewards. Stakers only receive rewards when the validator successfully participates in consensus, so stakers should only delegate to
-                    <span className="text-teal-400"> reputable and trusted validators</span>.
-                </p>
+    // For animation counters
+    const [counter, setCounter] = useState(0);
 
-                {/* Staking Stats */}
-                <div className="grid grid-cols-2 gap-8 mb-12">
-                    <div>
-                        <div className="text-gray-400 text-sm mb-1">Total Staked</div>
-                        <div className="text-4xl font-medium">421,248,002</div>
+    React.useEffect(() => {
+        const interval = setInterval(() => {
+            setCounter(prev => (prev < 421248002) ? prev + 1000000 : 421248002);
+        }, 50);
+
+        return () => clearInterval(interval);
+    }, []);
+
+    return (
+        <div className="min-h-screen text-white bg-gradient-to-b from-black to-gray-900 p-8">
+            <div className="max-w-7xl w-full mx-auto">
+                {/* Header with gradient accent */}
+                <div className="relative mb-12">
+                    <div className="absolute top-0 left-0 w-32 h-1 bg-gradient-to-r from-teal-400 to-blue-500"></div>
+                    <h1 className="text-5xl font-medium pt-4 mb-4 flex items-center">
+                        Staking Dashboard
+                        <span className="ml-2 px-2 py-1 bg-teal-400 bg-opacity-20 rounded text-teal-400 text-sm">BETA</span>
+                    </h1>
+                    <p className="text-md mb-8 text-gray-300 max-w-3xl leading-relaxed">
+                        The Hyperliquid L1 is a proof-of-stake blockchain where stakers delegate the native token HYPE to
+                        <span className="text-teal-400 font-medium"> validators </span>
+                        to earn staking rewards. Stakers only receive rewards when the validator successfully participates in consensus, so stakers should only delegate to
+                        <span className="text-teal-400 font-medium"> reputable and trusted validators</span>.
+                    </p>
+                </div>
+
+                {/* Staking Stats Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+                    <div className="bg-gray-900 bg-opacity-70 backdrop-blur-sm p-6 rounded-xl border border-gray-800 hover:border-teal-500 transition-all shadow-xl">
+                        <div className="text-gray-400 text-sm mb-2 flex items-center">
+                            Total Staked <Info className="h-4 w-4 ml-2 cursor-pointer text-gray-500" />
+                        </div>
+                        <div className="text-4xl font-bold mb-2 flex items-center">
+                            <LineChart className="h-6 w-6 mr-2 text-teal-400" />
+                            {counter.toLocaleString()}
+                        </div>
+                        <div className="flex items-center text-teal-400 text-sm">
+                            <ArrowUpRight className="h-4 w-4 mr-1" />
+                            <span>+2.4% from last week</span>
+                        </div>
                     </div>
-                    <div>
-                        <div className="text-gray-400 text-sm mb-1">Your Stake</div>
-                        <div className="text-4xl font-medium">0</div>
+                    <div className="bg-gray-900 bg-opacity-70 backdrop-blur-sm p-6 rounded-xl border border-gray-800 hover:border-teal-500 transition-all shadow-xl">
+                        <div className="text-gray-400 text-sm mb-2 flex items-center">
+                            Your Stake <Info className="h-4 w-4 ml-2 cursor-pointer text-gray-500" />
+                        </div>
+                        <div className="text-4xl font-bold mb-2">0</div>
+                        <button className="text-sm bg-teal-400 hover:bg-teal-500 transition-colors text-black py-1 px-4 rounded-md font-medium">
+                            Stake Now
+                        </button>
                     </div>
                 </div>
 
                 {/* Main Dashboard */}
-                <div className="bg-gray-900 rounded-lg overflow-hidden mb-4">
+                <div className="bg-gray-900 bg-opacity-90 rounded-xl overflow-hidden mb-4 border border-gray-800 shadow-2xl">
                     {/* Tabs */}
-                    <div className="flex border-b border-gray-800">
+                    <div className="flex border-b border-gray-800 overflow-x-auto">
                         {tabs.map((tab) => (
                             <button
                                 key={tab}
-                                className={`px-6 py-3 text-sm ${activeTab === tab ? 'border-b-2 border-teal-400 text-white' : 'text-gray-400'}`}
+                                className={`px-6 py-4 text-sm font-medium transition-all ${activeTab === tab
+                                    ? 'border-b-2 border-teal-400 text-white bg-gray-800 bg-opacity-50'
+                                    : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800 hover:bg-opacity-30'}`}
                                 onClick={() => setActiveTab(tab)}
                             >
                                 {tab}
                             </button>
                         ))}
                         <div className="ml-auto flex items-center px-4">
-                            <button className="bg-gray-800 px-3 py-1 rounded flex items-center text-xs">
+                            <div className="flex items-center mr-4">
+                                <RefreshCw className="h-4 w-4 mr-2 text-teal-400" />
+                                <span className="text-xs text-gray-400">Last updated: 2 min ago</span>
+                            </div>
+                            <button className="bg-gray-800 px-4 py-2 rounded-md flex items-center text-xs hover:bg-gray-700 transition-colors">
                                 7D <ChevronDown className="h-3 w-3 ml-1" />
                             </button>
                         </div>
                     </div>
 
                     {/* Available Balance Section */}
-                    <div className="p-4 border-b border-gray-800">
-                        <div className="mb-2 text-sm">Available to Transfer to Staking Balance</div>
-                        <div className="flex">
-                            <div className="font-mono mr-2">0.0000000 HYPE</div>
-                        </div>
-                        <div className="mb-2 mt-3 text-sm">Available to Stake</div>
-                        <div className="flex">
-                            <div className="font-mono mr-2">0.0000000 HYPE</div>
-                        </div>
-                        <div className="mb-2 mt-3 text-sm">Available to Withdraw</div>
-                        <div className="flex">
-                            <div className="font-mono mr-2">0.0000000 HYPE</div>
-                        </div>
-                        <div className="mb-2 mt-3 text-sm">Total Staked</div>
-                        <div className="flex">
-                            <div className="font-mono mr-2">0.0000000 HYPE</div>
-                        </div>
-                        <div className="mb-2 mt-3 text-sm text-yellow-500">Pending Transfers to Spot Balance</div>
-                        <div className="flex">
-                            <div className="font-mono mr-2">0.0000000 HYPE</div>
+                    <div className="p-6 border-b border-gray-800 bg-gradient-to-r from-gray-900 to-gray-800">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+                            <div className="bg-gray-800 bg-opacity-50 p-4 rounded-lg border border-gray-700 hover:border-teal-500 transition-all">
+                                <div className="mb-2 text-sm text-gray-400">Available to Transfer</div>
+                                <div className="font-mono text-lg font-medium">0.0000000</div>
+                                <div className="text-xs text-teal-400 mt-1">HYPE</div>
+                            </div>
+                            <div className="bg-gray-800 bg-opacity-50 p-4 rounded-lg border border-gray-700 hover:border-teal-500 transition-all">
+                                <div className="mb-2 text-sm text-gray-400">Available to Stake</div>
+                                <div className="font-mono text-lg font-medium">0.0000000</div>
+                                <div className="text-xs text-teal-400 mt-1">HYPE</div>
+                            </div>
+                            <div className="bg-gray-800 bg-opacity-50 p-4 rounded-lg border border-gray-700 hover:border-teal-500 transition-all">
+                                <div className="mb-2 text-sm text-gray-400">Available to Withdraw</div>
+                                <div className="font-mono text-lg font-medium">0.0000000</div>
+                                <div className="text-xs text-teal-400 mt-1">HYPE</div>
+                            </div>
+                            <div className="bg-gray-800 bg-opacity-50 p-4 rounded-lg border border-gray-700 hover:border-teal-500 transition-all">
+                                <div className="mb-2 text-sm text-gray-400">Total Staked</div>
+                                <div className="font-mono text-lg font-medium">0.0000000</div>
+                                <div className="text-xs text-teal-400 mt-1">HYPE</div>
+                            </div>
+                            <div className="bg-gray-800 bg-opacity-50 p-4 rounded-lg border border-gray-700 hover:border-yellow-500 transition-all">
+                                <div className="mb-2 text-sm text-yellow-500">Pending Transfers</div>
+                                <div className="font-mono text-lg font-medium">0.0000000</div>
+                                <div className="text-xs text-yellow-500 mt-1">HYPE</div>
+                            </div>
                         </div>
                     </div>
 
                     {/* Staking Table */}
                     <div>
-                        <div className="grid grid-cols-8 gap-2 p-3 text-xs text-gray-400 border-b border-gray-800">
-                            <div>Name</div>
-                            <div>Description</div>
-                            <div>Stake</div>
-                            <div>Your Stake</div>
-                            <div>Uptime</div>
-                            <div>Est. APR</div>
-                            <div>Status</div>
-                            <div>Commission</div>
+                        <div className="grid grid-cols-8 gap-2 p-4 text-xs text-gray-400 border-b border-gray-800 bg-gray-900">
+                            <div className="font-medium">Name</div>
+                            <div className="font-medium">Description</div>
+                            <div className="font-medium">Stake</div>
+                            <div className="font-medium">Your Stake</div>
+                            <div className="font-medium">Uptime</div>
+                            <div className="font-medium">Est. APR</div>
+                            <div className="font-medium">Status</div>
+                            <div className="font-medium">Commission</div>
                         </div>
 
                         {stakingData.map((row) => (
-                            <div key={row.id} className="grid grid-cols-8 gap-2 p-3 text-xs border-b border-gray-800 hover:bg-gray-800">
-                                <div className="text-teal-400">{row.name}</div>
+                            <div key={row.id} className="grid grid-cols-8 gap-2 p-4 text-sm border-b border-gray-800 hover:bg-gray-800 transition-colors cursor-pointer">
+                                <div className="text-teal-400 font-medium">{row.name}</div>
                                 <div className="text-gray-300">{row.description}</div>
                                 <div>{row.stake}</div>
                                 <div>{row.yourStake}</div>
-                                <div>{row.uptime}</div>
+                                <div className={row.uptime === '100.00%' ? 'text-green-400' : 'text-yellow-400'}>{row.uptime}</div>
                                 <div>{row.est_apr}</div>
-                                <div className="text-teal-400">{row.status}</div>
+                                <div>
+                                    <span className="bg-teal-400 bg-opacity-20 text-teal-400 px-2 py-1 rounded-full text-xs">{row.status}</span>
+                                </div>
                                 <div>{row.commission}</div>
                             </div>
                         ))}
                     </div>
 
                     {/* Pagination */}
-                    <div className="flex justify-between items-center p-4 text-sm">
-                        <button className="bg-teal-400 text-gray-900 px-6 py-2 rounded">
-                            Connect
+                    <div className="flex justify-between items-center p-6 text-sm bg-gray-900">
+                        <button className="bg-teal-400 hover:bg-teal-500 transition-colors text-black px-6 py-2 rounded-md font-medium flex items-center">
+                            Connect Wallet
                         </button>
-                        <div className="text-teal-400">View All</div>
+                        <div className="text-teal-400 font-medium hover:underline cursor-pointer">View All Validators</div>
                         <div className="flex items-center text-gray-400">
                             <span>1-15 of 16</span>
-                            <button className="ml-2 p-1">
-                                <ChevronLeft className="h-4 w-4" />
+                            <button className="ml-2 p-1 hover:bg-gray-800 rounded transition-colors">
+                                <ChevronLeft className="h-5 w-5" />
                             </button>
-                            <button className="p-1">
-                                <ChevronRight className="h-4 w-4" />
+                            <button className="p-1 hover:bg-gray-800 rounded transition-colors">
+                                <ChevronRight className="h-5 w-5" />
                             </button>
                         </div>
                     </div>
+                </div>
+
+                <div className="text-center text-xs text-gray-500 mt-6">
+                    ©2025 Hyperliquid • All rights reserved • Protocol v1.2.4
                 </div>
             </div>
         </div>
