@@ -66,12 +66,10 @@ function TradingViewWidget() {
         }, 1500);
 
         if (container.current) {
-            // Clear existing chart
             container.current.innerHTML = '';
             container.current.appendChild(script);
         }
 
-        // Simulate live market data updates
         const dataInterval = setInterval(() => {
             const random = Math.random() * 0.5 - 0.25;
             const newPrice = parseFloat((marketData.price + random).toFixed(2));
@@ -108,9 +106,8 @@ function TradingViewWidget() {
     const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSliderValue(parseInt(e.target.value));
 
-        // Update quantity based on slider
         if (activeTab === 'Market') {
-            const maxAmount = 10000; // Max amount in USD
+            const maxAmount = 10000;
             const calculatedQty = (parseInt(e.target.value) / 100 * maxAmount / marketData.price).toFixed(4);
             setQuantity(calculatedQty);
         }
@@ -150,7 +147,7 @@ function TradingViewWidget() {
     };
 
     return (
-        <div className="flex flex-col h-full w-full bg-gray-950 text-white">
+        <div className="flex flex-col h-screen w-full bg-gray-950 text-white overflow-hidden">
             {/* Top Nav Bar */}
             <div className="bg-gray-900 px-4 py-3 flex items-center justify-between border-b border-gray-800">
                 <div className="flex items-center space-x-6">
@@ -179,11 +176,6 @@ function TradingViewWidget() {
                 </div>
 
                 <div className="flex items-center space-x-3">
-                    <div className="flex items-center bg-gray-800 px-3 py-1 rounded-md">
-                        <span className="text-sm text-gray-400 mr-2">Layout:</span>
-                        <span className="text-sm font-medium">Trading</span>
-                        <ChevronDown className="h-4 w-4 ml-1 text-gray-400" />
-                    </div>
                     <button className="p-1 hover:bg-gray-800 rounded-md">
                         <Star className="h-4 w-4 text-gray-400" />
                     </button>
@@ -193,10 +185,10 @@ function TradingViewWidget() {
                 </div>
             </div>
 
-            {/* Main Trading Interface */}
-            <div className="flex h-full w-full">
-                {/* Left side - TradingView Chart */}
-                <div className="flex-grow h-full relative">
+            {/* Main content area */}
+            <div className="flex flex-1 w-full overflow-hidden">
+                {/* Chart area */}
+                <div className="flex-grow relative overflow-hidden">
                     {/* Chart Header */}
                     <div className="absolute top-0 left-0 right-0 z-10 bg-gray-900 bg-opacity-80 backdrop-blur-sm p-3 flex justify-between items-center border-b border-gray-800">
                         <div className="flex items-center">
@@ -262,13 +254,13 @@ function TradingViewWidget() {
                     )}
 
                     {/* Trading View Chart */}
-                    <div className="tradingview-widget-container mt-10 h-full" ref={container}>
-                        <div className="tradingview-widget-container__widget" style={{ height: "calc(100% - 32px)", width: "100%" }}></div>
+                    <div className="tradingview-widget-container h-full w-full  pt-20" ref={container}>
+                        <div className="tradingview-widget-container__widget h-full w-full bg-gray-950"></div>
                     </div>
                 </div>
 
                 {/* Right side - Trading Panel */}
-                <div className="w-80 border-l border-gray-800 bg-gray-900 flex flex-col">
+                <div className="w-80 border-l border-gray-800 bg-gray-900 flex flex-col overflow-y-auto">
                     <div className="p-4 flex flex-col h-full">
                         {/* Tabs */}
                         <div className="flex border-b border-gray-800 mb-6">
@@ -321,7 +313,7 @@ function TradingViewWidget() {
                         </div>
 
                         {/* Trading Form */}
-                        <div className="flex-grow flex flex-col">
+                        <div className="flex-1 flex flex-col">
                             {/* Available Balance */}
                             <div className="flex justify-between mb-6 p-3 bg-gray-800 bg-opacity-50 rounded-md border border-gray-700">
                                 <div className="flex items-center">
@@ -359,33 +351,6 @@ function TradingViewWidget() {
                                         value={quantity}
                                         onChange={handleQuantityChange}
                                     />
-                                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                                        <span className="text-gray-400">Shares</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Size Selector */}
-                            <div className="mb-4">
-                                <div className="flex justify-between mb-2 items-center">
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger className="flex items-center gap-1 bg-gray-800 px-4 py-2 rounded-md border border-gray-700 hover:bg-gray-700 transition-colors">
-                                            <span>{selectedSize}</span>
-                                            <ChevronDown className="h-4 w-4 text-gray-400" />
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent className="bg-gray-800 border border-gray-700">
-                                            <DropdownMenuLabel>Select Size</DropdownMenuLabel>
-                                            <DropdownMenuSeparator />
-                                            <DropdownMenuItem onClick={() => handleSelect("Small")}>Small</DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => handleSelect("Medium")}>Medium</DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => handleSelect("Large")}>Large</DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => handleSelect("XL")}>XL</DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                    <div className="flex items-center">
-                                        <Repeat className="h-4 w-4 text-gray-400 mr-1" />
-                                        <span className="text-sm text-gray-400">1x Leverage</span>
-                                    </div>
                                 </div>
                             </div>
 
