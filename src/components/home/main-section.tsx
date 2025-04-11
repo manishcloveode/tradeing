@@ -121,8 +121,6 @@ function TradingViewWidget() {
         setSelectedTimeframe(tf);
     };
 
-
-
     const getPriceColor = () => {
         return heartbeat % 2 === 0 ?
             (marketData.change >= 0 ? 'text-teal-400' : 'text-red-500') :
@@ -244,16 +242,18 @@ function TradingViewWidget() {
                     )}
 
                     {/* Trading View Chart */}
-                    <div className="tradingview-widget-container h-full w-full  pt-20" ref={container}>
+                    <div className="tradingview-widget-container h-full w-full pt-20" ref={container}>
                         <div className="tradingview-widget-container__widget h-full w-full bg-gray-950"></div>
                     </div>
                 </div>
 
                 {/* Right side - Trading Panel */}
-                <div className="w-80 border-l border-gray-800 bg-gray-900 flex flex-col overflow-y-auto">
+                <div className="w-80 border-l border-gray-800 bg-gray-900 flex flex-col overflow-hidden">
+                    {/* Changed to overflow-hidden to remove scrollbar */}
                     <div className="p-4 flex flex-col h-full">
-                        {/* Tabs */}
-                        <div className="flex border-b border-gray-800 mb-6">
+                        {/* Changed to h-full to take full height */}
+                        <div className="flex border-b border-gray-800 mb-4">
+                            {/* Reduced margin-bottom */}
                             <button
                                 className={`flex-1 py-3 text-sm font-medium ${activeTab === 'Market'
                                     ? 'text-teal-400 border-b-2 border-teal-400'
@@ -279,9 +279,8 @@ function TradingViewWidget() {
                                 Pro
                             </button>
                         </div>
-
-                        {/* Buy/Sell Buttons */}
-                        <div className="mb-6 grid grid-cols-2 gap-2">
+                        <div className="mb-4 grid grid-cols-2 gap-2">
+                            {/* Reduced margin-bottom */}
                             <button
                                 className={`py-3 rounded-md font-medium transition-all ${activeAction === 'Buy'
                                     ? 'bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-md shadow-teal-900'
@@ -302,18 +301,16 @@ function TradingViewWidget() {
                             </button>
                         </div>
 
-                        {/* Trading Form */}
+                        {/* Using flex-1 to make this container take the remaining space */}
                         <div className="flex-1 flex flex-col">
-                            {/* Available Balance */}
-                            <div className="flex justify-between mb-6 p-3 bg-gray-800 bg-opacity-50 rounded-md border border-gray-700">
+                            <div className="flex justify-between mb-4 p-3 bg-gray-800 bg-opacity-50 rounded-md border border-gray-700">
+                                {/* Reduced margin-bottom */}
                                 <div className="flex items-center">
                                     <DollarSign className="h-4 w-4 mr-1 text-gray-400" />
                                     <span className="text-gray-300 text-sm">Available</span>
                                 </div>
                                 <span className="font-medium">10,000.00 USDC</span>
                             </div>
-
-                            {/* Price Input (for Limit orders) */}
                             {activeTab === 'Limit' && (
                                 <div className="mb-4">
                                     <label className="block text-sm text-gray-400 mb-2">Price</label>
@@ -330,9 +327,8 @@ function TradingViewWidget() {
                                     </div>
                                 </div>
                             )}
-
-                            {/* Quantity Input */}
                             <div className="mb-4">
+                                {/* Reduced margin-bottom */}
                                 <label className="block text-sm text-gray-400 mb-2">Quantity</label>
                                 <div className="relative">
                                     <input
@@ -343,9 +339,8 @@ function TradingViewWidget() {
                                     />
                                 </div>
                             </div>
-
-                            {/* Slider */}
-                            <div className="mb-6">
+                            <div className="mb-4">
+                                {/* Reduced margin-bottom */}
                                 <div className="flex justify-between mb-2 text-xs text-gray-400">
                                     <span>0%</span>
                                     <span>25%</span>
@@ -367,35 +362,32 @@ function TradingViewWidget() {
                                     <span className="ml-1">%</span>
                                 </div>
                             </div>
-
-                            {/* Total */}
-                            <div className="flex justify-between mb-6 p-3 bg-gray-800 bg-opacity-50 rounded-md border border-gray-700">
+                            <div className="flex justify-between mb-4 p-3 bg-gray-800 bg-opacity-50 rounded-md border border-gray-700">
+                                {/* Reduced margin-bottom */}
                                 <span className="text-gray-300">Total</span>
                                 <span className="font-medium">${calculateTotal()} USD</span>
                             </div>
-
-                            {/* Warning Notice */}
-                            <div className="mb-6 p-3 bg-gray-800 rounded-md flex items-start text-xs text-gray-400 border border-gray-700">
+                            <div className="mb-4 p-3 bg-gray-800 rounded-md flex items-start text-xs text-gray-400 border border-gray-700">
+                                {/* Reduced margin-bottom */}
                                 <AlertCircle className="h-4 w-4 mr-2 mt-0.5 text-gray-400 flex-shrink-0" />
                                 <span>
                                     Trading {selectedSymbol} involves substantial risk. Market orders execute immediately at market price.
                                 </span>
                             </div>
-
-                            {/* Action Button */}
-                            <button
-                                className={`w-full py-4 rounded-md font-medium text-white ${activeAction === 'Buy'
-                                    ? 'bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700'
-                                    : 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700'
-                                    } transition-all shadow-lg`}
-                            >
-                                {activeAction === 'Buy' ? 'Buy' : 'Sell'} {selectedSymbol}
-                            </button>
-
-                            {/* Market Hours */}
-                            <div className="mt-4 flex justify-center items-center text-xs text-gray-400">
-                                <Clock className="h-3 w-3 mr-1" />
-                                <span>Market Hours: 9:30 AM - 4:00 PM ET</span>
+                            {/* Push the button to the bottom with margin-top auto */}
+                            <div className="mt-auto">
+                                <button
+                                    className={`w-full py-4 rounded-md font-medium text-white ${activeAction === 'Buy'
+                                        ? 'bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700'
+                                        : 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700'
+                                        } transition-all shadow-lg`}
+                                >
+                                    {activeAction === 'Buy' ? 'Buy' : 'Sell'} {selectedSymbol}
+                                </button>
+                                <div className="mt-4 flex justify-center items-center text-xs text-gray-400">
+                                    <Clock className="h-3 w-3 mr-1" />
+                                    <span>Market Hours: 9:30 AM - 4:00 PM ET</span>
+                                </div>
                             </div>
                         </div>
                     </div>
