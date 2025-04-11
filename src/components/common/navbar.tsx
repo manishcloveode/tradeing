@@ -1,6 +1,6 @@
 "use client";
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, Globe, Settings } from 'lucide-react';
+import { ChevronDown, ChevronUp, Earth, Settings } from 'lucide-react';
 
 export default function Navbar() {
     const [moreOpen, setMoreOpen] = useState(false);
@@ -61,7 +61,7 @@ export default function Navbar() {
                     Connect
                 </button>
                 <button className="text-gray-300 hover:text-white">
-                    <Globe size={20} />
+                    <Earth size={20} />
                 </button>
                 <button className="text-gray-300 hover:text-white">
                     <Settings size={20} />
